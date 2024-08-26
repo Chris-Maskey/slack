@@ -20,6 +20,14 @@ import { TriangleAlert } from "lucide-react";
 
 const signUpSchema = z
   .object({
+    name: z
+      .string()
+      .min(1, {
+        message: "Full Name is required",
+      })
+      .min(5, {
+        message: "Full Name must be of atleast 5 characters long",
+      }),
     email: z.string().email().min(1, {
       message: "Email is required",
     }),
@@ -65,8 +73,8 @@ export const SignUpCard = ({ setState }: SignUpCardProps) => {
     signIn(value).finally(() => setIsPending(false));
   };
 
-  const onPasswordSignIn = ({ email, password }: SignUpSchemaType) => {
-    signIn("password", { email, password, flow: "signUp" }).catch(() => {
+  const onPasswordSignUp = ({ name, email, password }: SignUpSchemaType) => {
+    signIn("password", { name, email, password, flow: "signUp" }).catch(() => {
       setError("root", {
         type: "custom",
         message: "Invalid Email or Password",
@@ -89,7 +97,19 @@ export const SignUpCard = ({ setState }: SignUpCardProps) => {
         </div>
       )}
       <CardContent className="space-y-5 px-0 pb-0">
-        <form className="space-y-2.5" onSubmit={handleSubmit(onPasswordSignIn)}>
+        <form className="space-y-2.5" onSubmit={handleSubmit(onPasswordSignUp)}>
+          {/*Full Name*/}
+          <div className="space-y-1">
+            <Input
+              {...register("name")}
+              disabled={isSubmitting || isPending}
+              placeholder="Full Name"
+              type="text"
+            />
+            {errors.name && (
+              <p className="text-xs text-red-500">{errors.name.message}</p>
+            )}
+          </div>
           {/*Email Input*/}
           <div className="space-y-1">
             <Input
