@@ -16,6 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 
+import { useAuthActions } from "@convex-dev/auth/react";
+
 const signInSchema = z.object({
   email: z.string().email().min(1, {
     message: "Email is required",
@@ -32,6 +34,8 @@ type SignInCardProps = {
 };
 
 export const SignInCard = ({ setState }: SignInCardProps) => {
+  const { signIn } = useAuthActions();
+
   const {
     register,
     handleSubmit,
@@ -43,8 +47,20 @@ export const SignInCard = ({ setState }: SignInCardProps) => {
 
   const [isPending, setIsPending] = useState<boolean>(false);
 
+  const onProviderSignIn = (value: "github" | "google") => {
+    setIsPending(true);
+    signIn(value).finally(() => {
+      setIsPending(false);
+    });
+  };
+
   const onPasswordSignIn = ({ email, password }: SignInSchemaType) => {
-    console.log(email, password);
+    signIn("password", { email, password, flow: "signIn" }).catch(() => {
+      setError("root", {
+        type: "custom",
+        message: "Invalid Email or Password",
+      });
+    });
   };
 
   return (
@@ -96,7 +112,9 @@ export const SignInCard = ({ setState }: SignInCardProps) => {
         <div className="flex flex-col space-y-2.5">
           <Button
             disabled={isSubmitting || isPending}
-            onClick={() => {}}
+            onClick={() => {
+              onProviderSignIn("google");
+            }}
             variant={"outline"}
             size={"lg"}
             className="w-full relative"
@@ -106,7 +124,9 @@ export const SignInCard = ({ setState }: SignInCardProps) => {
           </Button>
           <Button
             disabled={isSubmitting || isPending}
-            onClick={() => {}}
+            onClick={() => {
+              onProviderSignIn("github");
+            }}
             variant={"outline"}
             size={"lg"}
             className="w-full relative"
