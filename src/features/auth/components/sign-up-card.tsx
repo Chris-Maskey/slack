@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { TriangleAlert } from "lucide-react";
 
 const signUpSchema = z
   .object({
@@ -81,6 +82,12 @@ export const SignUpCard = ({ setState }: SignUpCardProps) => {
           Use your email or another service to continue
         </CardDescription>
       </CardHeader>
+      {errors.root && (
+        <div className="bg-destructive/15 p-3 rounded-md flex items-center gap-2 text-sm text-destructive mb-6">
+          <TriangleAlert className="size-4" />
+          {errors.root.message}
+        </div>
+      )}
       <CardContent className="space-y-5 px-0 pb-0">
         <form className="space-y-2.5" onSubmit={handleSubmit(onPasswordSignIn)}>
           {/*Email Input*/}
@@ -127,6 +134,7 @@ export const SignUpCard = ({ setState }: SignUpCardProps) => {
             className="w-full"
             size={"lg"}
             disabled={isSubmitting || isPending}
+            type="submit"
           >
             Continue
           </Button>
