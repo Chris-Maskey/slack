@@ -6,6 +6,10 @@ import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { Modals } from "@/components/modals";
 import { Toaster } from "sonner";
+import { JotaiProvider } from "@/components/jotai-provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ConvexReactClient } from "convex/react";
+import { ConvexQueryClient } from "@convex-dev/react-query";
 
 export const metadata: Metadata = {
   title: "Slack",
@@ -22,9 +26,11 @@ export default function RootLayout({
       <html lang="en">
         <body className={cn("antialiased", GeistSans.className)}>
           <ConvexClientProvider>
-            <Toaster />
-            <Modals />
-            {children}
+            <JotaiProvider>
+              <Toaster />
+              <Modals />
+              {children}
+            </JotaiProvider>
           </ConvexClientProvider>
         </body>
       </html>
