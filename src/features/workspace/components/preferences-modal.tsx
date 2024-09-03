@@ -19,6 +19,8 @@ import * as z from "zod";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useConfirm } from "@/hooks/use-confirm";
 
 const editWorkspaceSchema = z.object({
   workspaceName: z
@@ -47,8 +49,14 @@ export const PreferenceModal = ({
   setOpen,
   initialValue,
 }: PreferenceModalProps) => {
+  const router = useRouter();
+
   const [value, setValue] = useState<string>(initialValue);
   const [openEdit, setOpenEdit] = useState<boolean>(false);
+  const [ConfirmDialog, confirm] = useConfirm(
+    "Are you sure?",
+    "You're about to delete this item permanently. This action is irreversible and will result in the permanent loss of all associated data. Please confirm if you wish to proceed.",
+  );
 
   const {
     register,
@@ -72,7 +80,6 @@ export const PreferenceModal = ({
   const handleUpdateWorkspace = ({
     workspaceName,
   }: EditWorkspaceSchemaType) => {
-    console.log("WOWW");
     updateWorkspace({
       id: workspaceId,
       name: workspaceName,
@@ -82,80 +89,97 @@ export const PreferenceModal = ({
     });
   };
 
+  const handleRemoveWorkspace = async () => {
+    const ok = await confirm();
+
+    if (!ok) return;
+
+    removeWorkspace({
+      id: workspaceId,
+    }).then(() => {
+      router.replace("/");
+    });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="p-0 bg-gray-50 overflow-hidden">
-        <DialogHeader className="p-4 border-b bg-white">
-          <DialogTitle>{value}</DialogTitle>
-        </DialogHeader>
-        <div className="px-4 pb-4 flex flex-col gap-2">
-          <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-            <DialogTrigger asChild>
-              <div className="px-5 py-4 bg-white rounded-lg border cursor-pointer hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">Workspace name</p>
-                  <p className="text-sm text-[#1264a3] hover:underline font-semibold">
-                    Edit
-                  </p>
+    <>
+      <ConfirmDialog />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="p-0 bg-gray-50 overflow-hidden">
+          <DialogHeader className="p-4 border-b bg-white">
+            <DialogTitle>{value}</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 pb-4 flex flex-col gap-2">
+            <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+              <DialogTrigger asChild>
+                <div className="px-5 py-4 bg-white rounded-lg border cursor-pointer hover:bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Workspace name</p>
+                    <p className="text-sm text-[#1264a3] hover:underline font-semibold">
+                      Edit
+                    </p>
+                  </div>
+                  <p className="text-sm">{value}</p>
                 </div>
-                <p className="text-sm">{value}</p>
-              </div>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rename this workspace</DialogTitle>
-              </DialogHeader>
-              <form
-                onSubmit={handleSubmit(handleUpdateWorkspace)}
-                className="space-y-4"
-              >
-                <Input
-                  {...register("workspaceName")}
-                  disabled={isSubmitting}
-                  placeholder="Workspace name e.g. 'Work', 'Personal', 'Home'"
-                  autoFocus
-                />
-                {errors.workspaceName && (
-                  <p className="text-xs text-red-500">
-                    {errors.workspaceName.message}
-                  </p>
-                )}
-                <DialogFooter>
-                  <DialogClose asChild>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Rename this workspace</DialogTitle>
+                </DialogHeader>
+                <form
+                  onSubmit={handleSubmit(handleUpdateWorkspace)}
+                  className="space-y-4"
+                >
+                  <Input
+                    {...register("workspaceName")}
+                    disabled={isSubmitting}
+                    placeholder="Workspace name e.g. 'Work', 'Personal', 'Home'"
+                    autoFocus
+                  />
+                  {errors.workspaceName && (
+                    <p className="text-xs text-red-500">
+                      {errors.workspaceName.message}
+                    </p>
+                  )}
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button
+                        variant={"outline"}
+                        disabled={isUpdatingWorkspace || isSubmitting}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogClose>
                     <Button
-                      variant={"outline"}
+                      type="submit"
                       disabled={isUpdatingWorkspace || isSubmitting}
                     >
-                      Cancel
+                      Save
+                      {(isSubmitting || isUpdatingWorkspace) && (
+                        <Loader2 className="size-4 animate-spin ml-2" />
+                      )}
                     </Button>
-                  </DialogClose>
-                  <Button
-                    type="submit"
-                    disabled={isUpdatingWorkspace || isSubmitting}
-                  >
-                    Save
-                    {(isSubmitting || isUpdatingWorkspace) && (
-                      <Loader2 className="size-4 animate-spin ml-2" />
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <button
-            disabled={isRemovingWorkspace}
-            onClick={(e) => {
-              e.preventDefault();
-              removeWorkspace({ id: workspaceId });
-            }}
-            className="flex items-center gap-2 px-5 py-4 bg-white rounded-lg border cursor-pointer hover:bg-gray-50 text-rose-600 disabled:bg-gray-100"
-          >
-            <Trash className="size-4" />
-            <p className="text-sm font-semibold">Delete Workspace</p>
-            {isRemovingWorkspace && <Loader2 className="size-4 animate-spin" />}
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <button
+              disabled={isRemovingWorkspace}
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveWorkspace();
+              }}
+              className="flex items-center gap-2 px-5 py-4 bg-white rounded-lg border cursor-pointer hover:bg-gray-50 text-rose-600 disabled:bg-gray-100"
+            >
+              <Trash className="size-4" />
+              <p className="text-sm font-semibold">Delete Workspace</p>
+              {isRemovingWorkspace && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
